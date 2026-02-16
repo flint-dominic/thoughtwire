@@ -24,6 +24,7 @@ from .protocol import (
     encode, decode, FRAME_V1_HEADER, AGENTS, AGENTS_REV,
     from_egregore_json, to_egregore_json, validate_channel,
 )
+from .signing import load_agent_keys, sign_frame, verify_frame
 
 log = logging.getLogger("thoughtwire.bridge")
 
@@ -46,7 +47,8 @@ class ThoughtwireBridge:
                  mqtt_user=None, mqtt_pass=None,
                  egregore_ws="ws://yogsothoth:8420/ws",
                  egregore_rest="http://yogsothoth:8420",
-                 egregore_token=None, channels=None):
+                 egregore_token=None, channels=None,
+                 sign_as=None):
         self.mqtt_host = mqtt_host
         self.mqtt_port = mqtt_port
         self.mqtt_user = mqtt_user
@@ -55,6 +57,16 @@ class ThoughtwireBridge:
         self.egregore_rest = egregore_rest
         self.egregore_token = egregore_token
         self.channels = channels or ["general"]
+        
+        # Frame signing
+        self.keypair = None
+        self.sign_as = sign_as
+        if sign_as:
+            self.keypair = load_agent_keys(sign_as)
+            if self.keypair.has_keys:
+                log.info(f"🔏 Frame signing enabled as '{sign_as}'")
+            else:
+                log.warning(f"⚠️ No keys for '{sign_as}', frames will be unsigned")
 
         self.mqtt_client = None
         self.stats = {
@@ -83,6 +95,22 @@ class ThoughtwireBridge:
         log.info("📡 MQTT subscribed to agent response topics")
 
     def _on_mqtt_message(self, client, userdata, msg):
+        # Try v2 verification first
+        if msg.payload and len(msg.payload) >= 16 and msg.payload[0] == 2:
+            # V2 frame — attempt verification against known keys
+            from .signing import init_all_keys
+            if not hasattr(self, '_known_keys'):
+                self._known_keys = init_all_keys(["nix", "llama", "gpt", "gemini", "bridge"])
+            
+            for name, kp in self._known_keys.items():
+                decoded, verified, signed = verify_frame(msg.payload, kp)
+                if verified:
+                    log.info(f"🔏 Verified frame from {name}")
+                    break
+            else:
+                if msg.payload[0] == 2:
+                    log.warning(f"⚠️ Signed frame could not be verified against any known key")
+        
         frame = decode(msg.payload)
         if not frame:
             try:
@@ -137,6 +165,11 @@ class ThoughtwireBridge:
 
         binary_frame = encode("chat", agent_int, 1.0, "inform",
                                text.encode("utf-8")[:65535])
+        
+        # Sign if keypair available
+        if self.keypair and self.keypair.has_keys:
+            binary_frame = sign_frame(binary_frame, self.keypair)
+        
         json_size = len(json.dumps({"agent": agent_id, "text": text}).encode())
 
         topic = f"egregore/council/{channel}"

@@ -39,6 +39,7 @@ def cmd_bridge(args):
         egregore_ws=args.egregore_ws, egregore_rest=args.egregore_rest,
         egregore_token=args.token,
         channels=args.channels.split(",") if args.channels else ["general", "ai-chat"],
+        sign_as=args.sign,
     )
     asyncio.run(bridge.run())
 
@@ -122,8 +123,27 @@ def cmd_publish(args):
 
 def cmd_agent(args):
     """Run a test agent."""
-    from .agent import EchoAgent, SilentAgent
+    if args.native:
+        from .native_agent import NativeAgent, WatchdogAgent
+        if args.name == "watchdog":
+            agent = WatchdogAgent(
+                mqtt_host=args.mqtt_host, mqtt_port=args.mqtt_port,
+                mqtt_user=args.mqtt_user, mqtt_pass=args.mqtt_pass,
+            )
+        else:
+            agent = NativeAgent(
+                name=args.name, mqtt_host=args.mqtt_host, mqtt_port=args.mqtt_port,
+                mqtt_user=args.mqtt_user, mqtt_pass=args.mqtt_pass,
+                channels=args.channels.split(",") if args.channels else ["general"],
+            )
+        try:
+            agent.run()
+        except KeyboardInterrupt:
+            s = agent.stats()
+            print(f"\n📊 {json.dumps(s, indent=2)}")
+        return
     
+    from .agent import EchoAgent, SilentAgent
     AgentClass = SilentAgent if args.silent else EchoAgent
     agent = AgentClass(
         name=args.name, mqtt_host=args.mqtt_host, mqtt_port=args.mqtt_port,
@@ -290,6 +310,8 @@ def main():
     p.add_argument("--egregore-rest", default=os.environ.get("EGREGORE_REST", "http://yogsothoth:8420"))
     p.add_argument("--token", default=os.environ.get("EGREGORE_TOKEN"))
     p.add_argument("--channels", default="general,ai-chat")
+    p.add_argument("--sign", default=os.environ.get("THOUGHTWIRE_SIGN", "bridge"),
+                   metavar="AGENT", help="Sign outgoing frames as agent (default: bridge)")
     
     # subscribe
     p = sub.add_parser("subscribe", help="Listen to MQTT traffic")
@@ -313,6 +335,7 @@ def main():
     p.add_argument("name", help="Agent name")
     p.add_argument("--channels", default="general")
     p.add_argument("--silent", action="store_true", help="Listen-only mode")
+    p.add_argument("--native", action="store_true", help="Run as MQTT-native agent (signed v2 frames)")
     p.add_argument("--sign", default=None, metavar="AGENT", help="Sign outgoing frames")
     
     # keygen
