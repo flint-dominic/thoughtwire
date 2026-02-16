@@ -16,9 +16,9 @@ from .protocol import (
 def generate_protobuf() -> str:
     """Generate a .proto file from protocol constants."""
     # Build enum entries
-    ft_entries = "\n".join(f"    {k.upper()} = {v};" for k, v in sorted(FRAME_TYPES.items(), key=lambda x: x[1]))
-    intent_entries = "\n".join(f"    {k.upper()} = {v};" for k, v in sorted(INTENTS.items(), key=lambda x: x[1]))
-    channel_entries = "\n".join(f"    {k.upper().replace('-', '_')} = {v};" for k, v in sorted(CHANNELS.items(), key=lambda x: x[1]))
+    ft_entries = "\n".join(f"    FT_{k.upper()} = {v};" for k, v in sorted(FRAME_TYPES.items(), key=lambda x: x[1]))
+    intent_entries = "\n".join(f"    INT_{k.upper()} = {v};" for k, v in sorted(INTENTS.items(), key=lambda x: x[1]))
+    channel_entries = "\n".join(f"    CH_{k.upper().replace('-', '_')} = {v};" for k, v in sorted(CHANNELS.items(), key=lambda x: x[1]))
     
     agent_comments = "\n".join(f"//   {name} = 0x{aid:08X}" for name, aid in sorted(AGENTS.items(), key=lambda x: x[1]))
 

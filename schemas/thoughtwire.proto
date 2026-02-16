@@ -1,6 +1,6 @@
 // Thoughtwire Protocol — Auto-generated from protocol.py
 // DO NOT EDIT — regenerate with: thoughtwire schema --format protobuf
-// Generated: 2026-02-16 20:04:37 UTC
+// Generated: 2026-02-16 20:08:15 UTC
 //
 // Source: https://github.com/flint-dominic/thoughtwire
 
@@ -14,38 +14,38 @@ option java_package = "com.thoughtwire.proto";
 // ── Frame Types ──────────────────────────────────────────────────
 
 enum FrameType {
-    CHAT = 0;
-    VOTE = 1;
-    STATE_DIFF = 2;
-    ATTENTION = 3;
-    SYSTEM = 4;
-    HEARTBEAT = 5;
-    ERROR = 6;
-    ACK = 7;
+    FT_CHAT = 0;
+    FT_VOTE = 1;
+    FT_STATE_DIFF = 2;
+    FT_ATTENTION = 3;
+    FT_SYSTEM = 4;
+    FT_HEARTBEAT = 5;
+    FT_ERROR = 6;
+    FT_ACK = 7;
 }
 
 // ── Intents ──────────────────────────────────────────────────────
 
 enum Intent {
-    INFORM = 0;
-    REQUEST = 1;
-    PROPOSE = 2;
-    APPROVE = 3;
-    REJECT = 4;
-    RESPOND = 5;
-    QUERY = 6;
-    DELEGATE = 7;
+    INT_INFORM = 0;
+    INT_REQUEST = 1;
+    INT_PROPOSE = 2;
+    INT_APPROVE = 3;
+    INT_REJECT = 4;
+    INT_RESPOND = 5;
+    INT_QUERY = 6;
+    INT_DELEGATE = 7;
 }
 
 // ── Channels ─────────────────────────────────────────────────────
 
 enum Channel {
-    GENERAL = 0;
-    AI_CHAT = 1;
-    COUNCIL = 2;
-    VOTES = 3;
-    SYSTEM = 4;
-    DIRECT = 5;
+    CH_GENERAL = 0;
+    CH_AI_CHAT = 1;
+    CH_COUNCIL = 2;
+    CH_VOTES = 3;
+    CH_SYSTEM = 4;
+    CH_DIRECT = 5;
 }
 
 // ── Known Agents ─────────────────────────────────────────────────

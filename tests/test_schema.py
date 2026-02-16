@@ -15,12 +15,12 @@ class TestSchemaGeneration:
     def test_protobuf_has_all_types(self):
         _, content = generate("protobuf")
         for ft in FRAME_TYPES:
-            assert ft.upper() in content
+            assert f"FT_{ft.upper()}" in content
 
     def test_protobuf_has_all_intents(self):
         _, content = generate("protobuf")
         for intent in INTENTS:
-            assert intent.upper() in content
+            assert f"INT_{intent.upper()}" in content
 
     def test_c_header_guards(self):
         _, content = generate("c")
