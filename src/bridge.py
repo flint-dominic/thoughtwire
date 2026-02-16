@@ -134,12 +134,15 @@ class ThoughtwireBridge:
     
     def __init__(self, 
                  mqtt_host="127.0.0.1", mqtt_port=1883,
+                 mqtt_user=None, mqtt_pass=None,
                  egregore_ws="ws://yogsothoth:8420/ws",
                  egregore_rest="http://yogsothoth:8420",
                  egregore_token=None,
                  channels=None):
         self.mqtt_host = mqtt_host
         self.mqtt_port = mqtt_port
+        self.mqtt_user = mqtt_user
+        self.mqtt_pass = mqtt_pass
         self.egregore_ws = egregore_ws
         self.egregore_rest = egregore_rest
         self.egregore_token = egregore_token
@@ -163,9 +166,13 @@ class ThoughtwireBridge:
                                         client_id="thoughtwire-bridge")
         self.mqtt_client.on_connect = self._on_mqtt_connect
         self.mqtt_client.on_message = self._on_mqtt_message
+        # Auth if credentials provided
+        if self.mqtt_user and self.mqtt_pass:
+            self.mqtt_client.username_pw_set(self.mqtt_user, self.mqtt_pass)
         self.mqtt_client.connect(self.mqtt_host, self.mqtt_port)
         self.mqtt_client.loop_start()
-        log.info(f"🔌 MQTT connected to {self.mqtt_host}:{self.mqtt_port}")
+        auth_status = "authenticated" if self.mqtt_user else "anonymous"
+        log.info(f"🔌 MQTT connected to {self.mqtt_host}:{self.mqtt_port} ({auth_status})")
     
     def _on_mqtt_connect(self, client, userdata, flags, rc, properties=None):
         """Subscribe to agent response topics."""
@@ -387,12 +394,23 @@ def _run_cli():
     parser = argparse.ArgumentParser(description="Egregore Thoughtwire — MQTT Bridge")
     parser.add_argument("mode", choices=["bridge", "test-agent", "publish", "subscribe", "stats"],
                         help="Mode: bridge (WS↔MQTT), test-agent, publish, subscribe, stats")
-    parser.add_argument("--mqtt-host", default="127.0.0.1")
-    parser.add_argument("--mqtt-port", type=int, default=1883)
-    parser.add_argument("--egregore-ws", default="ws://yogsothoth:8420/ws")
-    parser.add_argument("--egregore-rest", default="http://yogsothoth:8420")
-    parser.add_argument("--token", default=os.environ.get("EGREGORE_TOKEN", 
-                        "oY-mlVGObWMURD5EPDvp5w1VHFZ6ZESXLjMHEz-3J_E"))
+    # Load .env if present
+    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    k, v = line.split('=', 1)
+                    os.environ.setdefault(k.strip(), v.strip())
+
+    parser.add_argument("--mqtt-host", default=os.environ.get("MQTT_HOST", "127.0.0.1"))
+    parser.add_argument("--mqtt-port", type=int, default=int(os.environ.get("MQTT_PORT", "1883")))
+    parser.add_argument("--mqtt-user", default=os.environ.get("MQTT_USER"))
+    parser.add_argument("--mqtt-pass", default=os.environ.get("MQTT_PASS"))
+    parser.add_argument("--egregore-ws", default=os.environ.get("EGREGORE_WS", "ws://yogsothoth:8420/ws"))
+    parser.add_argument("--egregore-rest", default=os.environ.get("EGREGORE_REST", "http://yogsothoth:8420"))
+    parser.add_argument("--token", default=os.environ.get("EGREGORE_TOKEN"))
     parser.add_argument("--channel", default="general")
     parser.add_argument("--message", "-m", default=None)
     parser.add_argument("--agent-name", default="test-agent")
@@ -402,6 +420,8 @@ def _run_cli():
         bridge = ThoughtwireBridge(
             mqtt_host=args.mqtt_host,
             mqtt_port=args.mqtt_port,
+            mqtt_user=args.mqtt_user,
+            mqtt_pass=args.mqtt_pass,
             egregore_ws=args.egregore_ws,
             egregore_rest=args.egregore_rest,
             egregore_token=args.token,
