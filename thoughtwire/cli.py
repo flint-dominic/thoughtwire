@@ -208,6 +208,38 @@ def cmd_encode(args):
               f"conf={decoded['confidence']:.2f} \"{decoded['payload_text'][:60]}\"")
 
 
+def cmd_schema(args):
+    """Generate schema in various formats."""
+    from .schema import generate, FORMATS
+    
+    fmt = args.format
+    try:
+        filename, content = generate(fmt)
+    except ValueError as e:
+        print(f"❌ {e}")
+        sys.exit(1)
+    
+    if args.output:
+        outpath = args.output
+    elif args.stdout:
+        print(content)
+        return
+    else:
+        outpath = filename
+    
+    with open(outpath, "w") as f:
+        f.write(content)
+    print(f"📐 Generated {outpath} ({len(content)} bytes)")
+    
+    if not args.stdout:
+        # Show a preview
+        lines = content.strip().split("\n")
+        preview = "\n".join(lines[:8])
+        print(f"\n{preview}")
+        if len(lines) > 8:
+            print(f"   ... ({len(lines)} lines total)")
+
+
 def cmd_stats(args):
     """Show protocol statistics."""
     print("📊 Thoughtwire Protocol")
@@ -302,6 +334,14 @@ def main():
     p.add_argument("--confidence", type=float, default=1.0)
     p.add_argument("--agent", default="nix")
     
+    # schema
+    p = sub.add_parser("schema", help="Generate protocol schemas")
+    p.add_argument("--format", "-f", required=True,
+                   choices=["protobuf", "proto", "flatbuffers", "fbs", "json", "jsonschema", "c", "rust"],
+                   help="Output format")
+    p.add_argument("--output", "-o", default=None, help="Output file path")
+    p.add_argument("--stdout", action="store_true", help="Print to stdout instead of file")
+
     # stats
     p = sub.add_parser("stats", help="Protocol statistics")
     add_mqtt_args(p)
@@ -317,7 +357,7 @@ def main():
         "publish": cmd_publish, "agent": cmd_agent,
         "keygen": cmd_keygen, "keylist": cmd_keylist,
         "decode": cmd_decode, "encode": cmd_encode,
-        "stats": cmd_stats,
+        "stats": cmd_stats, "schema": cmd_schema,
     }
     
     commands[args.command](args)

@@ -1,0 +1,52 @@
+// Thoughtwire Protocol — FlatBuffers Schema
+// Auto-generated from protocol.py
+// DO NOT EDIT — regenerate with: thoughtwire schema --format flatbuffers
+// Generated: 2026-02-16 20:04:37 UTC
+
+namespace Thoughtwire;
+
+enum FrameType : ubyte {
+    CHAT = 0,
+    VOTE = 1,
+    STATE_DIFF = 2,
+    ATTENTION = 3,
+    SYSTEM = 4,
+    HEARTBEAT = 5,
+    ERROR = 6,
+    ACK = 7,
+}
+
+enum Intent : ubyte {
+    INFORM = 0,
+    REQUEST = 1,
+    PROPOSE = 2,
+    APPROVE = 3,
+    REJECT = 4,
+    RESPOND = 5,
+    QUERY = 6,
+    DELEGATE = 7,
+}
+
+table Frame {
+    version: ubyte = 1;
+    frame_type: FrameType;
+    agent_id: uint32;
+    timestamp: uint32;
+    confidence: ubyte;          // 0-255 maps to 0.0-1.0
+    intent: Intent;
+    payload: [ubyte];           // max 65535 bytes
+    signature: [ubyte];         // Ed25519 (64 bytes) or empty
+}
+
+table FrameBatch {
+    frames: [Frame];
+}
+
+table PublicKey {
+    agent_name: string;
+    agent_id: uint32;
+    public_key: [ubyte];        // 32 bytes Ed25519
+    timestamp: uint32;
+}
+
+root_type Frame;

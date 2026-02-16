@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flint-dominic/thoughtwire/frame.schema.json",
+  "title": "Thoughtwire Frame",
+  "description": "Auto-generated from protocol.py \u2014 2026-02-16",
+  "type": "object",
+  "required": [
+    "version",
+    "frame_type",
+    "agent_id",
+    "timestamp",
+    "confidence",
+    "intent"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "enum": [
+        1,
+        2
+      ],
+      "description": "Protocol version"
+    },
+    "frame_type": {
+      "type": "string",
+      "enum": [
+        "chat",
+        "vote",
+        "state_diff",
+        "attention",
+        "system",
+        "heartbeat",
+        "error",
+        "ack"
+      ],
+      "description": "Frame type"
+    },
+    "agent_id": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295,
+      "description": "Agent identifier (uint32)"
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295,
+      "description": "Unix timestamp (uint32)"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence level"
+    },
+    "intent": {
+      "type": "string",
+      "enum": [
+        "inform",
+        "request",
+        "propose",
+        "approve",
+        "reject",
+        "respond",
+        "query",
+        "delegate"
+      ],
+      "description": "Intent type"
+    },
+    "payload": {
+      "type": "string",
+      "maxLength": 65535,
+      "description": "Payload text (UTF-8)"
+    },
+    "signed": {
+      "type": "boolean",
+      "description": "Whether frame carries a signature"
+    },
+    "verified": {
+      "type": "boolean",
+      "description": "Whether signature was verified"
+    },
+    "signature": {
+      "type": "string",
+      "description": "Ed25519 signature (hex-encoded)"
+    }
+  }
+}
