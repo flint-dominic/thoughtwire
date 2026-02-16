@@ -10,6 +10,9 @@ import hashlib
 import hmac
 import os
 import struct
+import time
+import threading
+from collections import OrderedDict
 from pathlib import Path
 
 try:
@@ -238,3 +241,96 @@ def list_keys() -> dict:
     for hmac_file in sorted(KEYS_DIR.glob("*.hmac")):
         pubkeys[hmac_file.stem] = "(hmac-shared-secret)"
     return pubkeys
+
+
+# ── Replay Protection ─────────────────────────────────────────────
+
+class ReplayGuard:
+    """Prevents frame replay attacks using timestamp window + nonce dedup.
+    
+    Two layers:
+    1. Timestamp window — reject frames older than `max_age_seconds`
+    2. Nonce dedup — reject duplicate frame hashes within the window
+    
+    Thread-safe. Bounded memory (evicts oldest nonces at `max_nonces`).
+    """
+    
+    def __init__(self, max_age_seconds: int = 300, max_nonces: int = 10000):
+        self.max_age = max_age_seconds
+        self.max_nonces = max_nonces
+        self._seen: OrderedDict[bytes, float] = OrderedDict()
+        self._lock = threading.Lock()
+        self.rejected_replay = 0
+        self.rejected_expired = 0
+        self.accepted = 0
+    
+    def check(self, frame_bytes: bytes, frame_timestamp: int) -> tuple:
+        """Check if frame is fresh and unique.
+        
+        Args:
+            frame_bytes: Raw frame bytes (used as nonce via hash)
+            frame_timestamp: Timestamp from frame header (epoch seconds)
+        
+        Returns:
+            (accepted: bool, reason: str or None)
+        """
+        now = int(time.time())
+        
+        # Layer 1: Timestamp window
+        age = abs(now - frame_timestamp)
+        if age > self.max_age:
+            self.rejected_expired += 1
+            return False, f"frame expired ({age}s old, max {self.max_age}s)"
+        
+        # Layer 2: Nonce dedup (hash of full frame including signature)
+        nonce = hashlib.sha256(frame_bytes).digest()[:16]
+        
+        with self._lock:
+            if nonce in self._seen:
+                self.rejected_replay += 1
+                return False, "duplicate frame (replay detected)"
+            
+            # Add nonce
+            self._seen[nonce] = now
+            
+            # Evict old entries
+            self._evict(now)
+            
+            self.accepted += 1
+            return True, None
+    
+    def _evict(self, now: float):
+        """Remove expired nonces and enforce max size."""
+        # Time-based eviction
+        cutoff = now - self.max_age
+        while self._seen:
+            oldest_nonce, oldest_time = next(iter(self._seen.items()))
+            if oldest_time < cutoff:
+                self._seen.popitem(last=False)
+            else:
+                break
+        
+        # Size-based eviction
+        while len(self._seen) > self.max_nonces:
+            self._seen.popitem(last=False)
+    
+    def stats(self) -> dict:
+        with self._lock:
+            return {
+                "accepted": self.accepted,
+                "rejected_replay": self.rejected_replay,
+                "rejected_expired": self.rejected_expired,
+                "nonces_cached": len(self._seen),
+                "max_age_seconds": self.max_age,
+            }
+
+
+# Singleton for bridge/agent use
+_default_guard: ReplayGuard | None = None
+
+def get_replay_guard(max_age: int = 300) -> ReplayGuard:
+    """Get or create the default ReplayGuard singleton."""
+    global _default_guard
+    if _default_guard is None:
+        _default_guard = ReplayGuard(max_age_seconds=max_age)
+    return _default_guard

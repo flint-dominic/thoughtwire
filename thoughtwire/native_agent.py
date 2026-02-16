@@ -14,7 +14,7 @@ import json
 
 from .agent import Agent
 from .protocol import decode, FRAME_TYPES, INTENTS, AGENTS_REV
-from .signing import load_agent_keys, sign_frame, verify_frame, init_all_keys
+from .signing import load_agent_keys, sign_frame, verify_frame, init_all_keys, get_replay_guard
 
 log = logging.getLogger("thoughtwire.native")
 
@@ -39,9 +39,28 @@ class NativeAgent(Agent):
         )
         self._handler = handler
         self._known_keys = init_all_keys(["nix", "llama", "gpt", "gemini", "bridge"])
+        self._replay_guard = get_replay_guard(max_age=300)
         self.verified_count = 0
         self.unverified_count = 0
         self.rejected_count = 0
+    
+    def _on_message(self, client, userdata, msg):
+        """Override to add replay protection before frame processing."""
+        from .protocol import decode
+        frame = decode(msg.payload)
+        if not frame:
+            return
+        if frame["agent_id"] == self.agent_id:
+            return
+        
+        # Replay protection
+        accepted, reason = self._replay_guard.check(msg.payload, frame.get("timestamp", 0))
+        if not accepted:
+            self.rejected_count += 1
+            log.warning(f"🛡️ REPLAY REJECTED from {frame.get('agent_name', '?')}: {reason}")
+            return
+        
+        self.on_frame(frame, msg.topic)
     
     def on_frame(self, frame, topic):
         """Process incoming frame with signature verification."""
@@ -82,6 +101,7 @@ class NativeAgent(Agent):
             "verified_frames": self.verified_count,
             "unverified_frames": self.unverified_count,
             "rejected_frames": self.rejected_count,
+            "replay_guard": self._replay_guard.stats(),
         })
         return base
 
