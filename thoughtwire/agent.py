@@ -12,6 +12,7 @@ import paho.mqtt.client as mqtt
 
 from .protocol import encode, decode, AGENTS, AGENTS_REV, validate_channel
 from .signing import AgentKeyPair, load_agent_keys
+from .ratelimit import RateLimiter, get_default as get_rate_limiter
 
 log = logging.getLogger("thoughtwire.agent")
 
@@ -23,11 +24,13 @@ class Agent:
     """
     
     def __init__(self, name: str, agent_id: int = None,
-                 mqtt_host: str = "127.0.0.1", mqtt_port: int = 1883,
+                 mqtt_host: str = "localhost", mqtt_port: int = 1883,
                  mqtt_user: str = None, mqtt_pass: str = None,
-                 channels: list = None, sign_frames: bool = False):
+                 channels: list = None, sign_frames: bool = False,
+                 rate_limiter: RateLimiter = None):
         self.name = name
         self.agent_id = agent_id or AGENTS.get(name, 0xDEADBEEF)
+        self.rate_limiter = rate_limiter or get_rate_limiter()
         self.mqtt_host = mqtt_host
         self.mqtt_port = mqtt_port
         self.channels = channels or ["general"]
@@ -67,6 +70,12 @@ class Agent:
         if frame["agent_id"] == self.agent_id:
             return
         
+        # Inbound rate limiting per sender
+        sender_id = frame.get("agent_name", str(frame["agent_id"]))
+        if not self.rate_limiter.check_inbound(sender_id):
+            log.warning(f"🚫 [{self.name}] dropping frame from {sender_id} (rate limited)")
+            return
+        
         self.on_frame(frame, msg.topic)
     
     def on_frame(self, frame: dict, topic: str):
@@ -81,6 +90,9 @@ class Agent:
     def send(self, channel: str, text: str, frame_type: str = "chat",
              intent: str = "inform", confidence: float = 0.9):
         """Send a binary frame to a channel."""
+        if not self.rate_limiter.check_publish():
+            log.warning(f"🚫 [{self.name}] publish dropped (rate limited)")
+            return False
         channel = validate_channel(channel)
         payload = text.encode("utf-8")[:65535]
         frame = encode(frame_type, self.agent_id, confidence, intent, payload)
@@ -97,6 +109,9 @@ class Agent:
     def send_direct(self, to_agent_id: int, text: str,
                     intent: str = "inform", confidence: float = 0.9):
         """Send a direct message to another agent."""
+        if not self.rate_limiter.check_publish():
+            log.warning(f"🚫 [{self.name}] direct publish dropped (rate limited)")
+            return False
         payload = text.encode("utf-8")[:65535]
         frame = encode("chat", self.agent_id, confidence, intent, payload)
         

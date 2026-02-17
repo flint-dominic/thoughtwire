@@ -298,7 +298,7 @@ def main():
     
     # Shared MQTT args
     def add_mqtt_args(p):
-        p.add_argument("--mqtt-host", default=os.environ.get("MQTT_HOST", "127.0.0.1"))
+        p.add_argument("--mqtt-host", default=os.environ.get("MQTT_HOST", "localhost"))
         p.add_argument("--mqtt-port", type=int, default=int(os.environ.get("MQTT_PORT", "1883")))
         p.add_argument("--mqtt-user", default=os.environ.get("MQTT_USER"))
         p.add_argument("--mqtt-pass", default=os.environ.get("MQTT_PASS"))

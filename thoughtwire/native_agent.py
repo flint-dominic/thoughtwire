@@ -27,7 +27,7 @@ class NativeAgent(Agent):
     """
     
     def __init__(self, name, agent_id=None, 
-                 mqtt_host="127.0.0.1", mqtt_port=1883,
+                 mqtt_host="localhost", mqtt_port=1883,
                  mqtt_user=None, mqtt_pass=None,
                  channels=None, handler=None):
         super().__init__(
@@ -109,7 +109,7 @@ class NativeAgent(Agent):
 class WatchdogAgent(NativeAgent):
     """Security monitoring agent. Watches all traffic, logs anomalies."""
     
-    def __init__(self, mqtt_host="127.0.0.1", mqtt_port=1883,
+    def __init__(self, mqtt_host="localhost", mqtt_port=1883,
                  mqtt_user=None, mqtt_pass=None):
         super().__init__(
             name="watchdog", agent_id=0xDA7CD06E,
@@ -156,7 +156,7 @@ class WatchdogAgent(NativeAgent):
 
 
 # Fix: WatchdogAgent agent_id can't use hex literal with letters in it
-WatchdogAgent.__init__.__defaults__ = ("127.0.0.1", 1883, None, None)
+WatchdogAgent.__init__.__defaults__ = ("localhost", 1883, None, None)
 
 
 def run_native_agent(name="native-test", handler=None, **kwargs):
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     
     run_native_agent(
         name="native-echo",
-        mqtt_host=os.environ.get("MQTT_HOST", "127.0.0.1"),
+        mqtt_host=os.environ.get("MQTT_HOST", "localhost"),
         mqtt_user=os.environ.get("MQTT_USER", "bridge"),
         mqtt_pass=os.environ.get("MQTT_PASS", "thoughtwire_bridge_2026"),
         handler=echo_handler,

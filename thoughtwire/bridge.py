@@ -25,6 +25,7 @@ from .protocol import (
     from_egregore_json, to_egregore_json, validate_channel,
 )
 from .signing import load_agent_keys, sign_frame, verify_frame
+from .ratelimit import get_default as get_rate_limiter
 
 log = logging.getLogger("thoughtwire.bridge")
 
@@ -43,7 +44,7 @@ decode_frame = decode
 class ThoughtwireBridge:
     """Bridges Egregore WebSocket server with MQTT binary protocol."""
 
-    def __init__(self, mqtt_host="127.0.0.1", mqtt_port=1883,
+    def __init__(self, mqtt_host="localhost", mqtt_port=1883,
                  mqtt_user=None, mqtt_pass=None,
                  egregore_ws="ws://yogsothoth:8420/ws",
                  egregore_rest="http://yogsothoth:8420",
@@ -69,6 +70,7 @@ class ThoughtwireBridge:
                 log.warning(f"⚠️ No keys for '{sign_as}', frames will be unsigned")
 
         self.mqtt_client = None
+        self.rate_limiter = get_rate_limiter()
         self.stats = {
             "ws_to_mqtt": 0, "mqtt_to_ws": 0,
             "bytes_json": 0, "bytes_binary": 0,
@@ -157,6 +159,9 @@ class ThoughtwireBridge:
             log.error(f"❌ Failed to post to Egregore: {e}")
 
     def publish_to_mqtt(self, channel: str, agent_id: str, text: str):
+        if not self.rate_limiter.check_publish():
+            log.warning(f"🚫 Bridge publish dropped (rate limited)")
+            return
         agent_int = 0
         try:
             agent_int = int(agent_id[:8], 16)
