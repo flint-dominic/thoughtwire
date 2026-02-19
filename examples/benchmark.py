@@ -74,7 +74,7 @@ def compare():
     minimal_payload = struct.pack("!BB", 1, 5)  # topic=1(new_member), candidate=5(glm5)
     minimal_vote = encode_frame(1, 0xc01ff43e, 0.87, 3, minimal_payload)
 
-    print(f"  Vote frame:")
+    print("  Vote frame:")
     print(f"    JSON:           {len(json_vote):>4} bytes  {json_vote[:60]}...")
     print(f"    Binary+JSON:    {len(binary_vote):>4} bytes  (header binary, payload JSON)")
     print(f"    Full binary:    {len(minimal_vote):>4} bytes  (everything binary)")
@@ -95,7 +95,7 @@ def compare():
     diff_payload = struct.pack("!Hf", 5, 0.02)  # tokens(u16) + rep_delta(f32) = 6 bytes
     binary_diff = encode_frame(2, 0x998ff305, 1.0, 0, diff_payload)
 
-    print(f"  State diff frame:")
+    print("  State diff frame:")
     print(f"    JSON:           {len(json_diff):>4} bytes")
     print(f"    Full binary:    {len(binary_diff):>4} bytes")
     print(f"    Savings:        {(1 - len(binary_diff)/len(json_diff))*100:.0f}% reduction")
@@ -113,7 +113,7 @@ def compare():
 
     binary_attn = encode_frame(3, 0xc814c38c, 0.95, 1)
 
-    print(f"  Attention request (no payload):")
+    print("  Attention request (no payload):")
     print(f"    JSON:           {len(json_attn):>4} bytes")
     print(f"    Full binary:    {len(binary_attn):>4} bytes")
     print(f"    Savings:        {(1 - len(binary_attn)/len(json_attn))*100:.0f}% reduction")

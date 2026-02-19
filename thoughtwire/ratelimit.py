@@ -8,7 +8,6 @@ at the application layer. Portable — travels with the code, not the host.
 import logging
 import threading
 import time
-from collections import defaultdict
 
 log = logging.getLogger("thoughtwire.ratelimit")
 

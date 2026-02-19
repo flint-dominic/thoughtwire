@@ -1,7 +1,6 @@
 """Tests for replay protection."""
 
 import time
-import pytest
 from thoughtwire.signing import ReplayGuard
 from thoughtwire.protocol import encode
 

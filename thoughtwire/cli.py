@@ -7,11 +7,9 @@ import json
 import logging
 import os
 import sys
-import time
 
 from .protocol import (
-    encode, decode, FRAME_TYPES, INTENTS, AGENTS, AGENTS_REV,
-    frame_size_comparison, validate_channel, VERSION_1, VERSION_2,
+    encode, decode, FRAME_TYPES, INTENTS, AGENTS, frame_size_comparison, validate_channel,
 )
 
 
@@ -76,7 +74,7 @@ def cmd_subscribe(args):
     topic = args.topic or "egregore/#"
     client.subscribe(topic)
     print(f"👂 Listening on {topic} at {args.mqtt_host}:{args.mqtt_port}")
-    print(f"   Press Ctrl+C to stop\n")
+    print("   Press Ctrl+C to stop\n")
     
     try:
         client.loop_forever()
@@ -230,7 +228,7 @@ def cmd_encode(args):
 
 def cmd_schema(args):
     """Generate schema in various formats."""
-    from .schema import generate, FORMATS
+    from .schema import generate
     
     fmt = args.format
     try:
@@ -263,16 +261,16 @@ def cmd_schema(args):
 def cmd_stats(args):
     """Show protocol statistics."""
     print("📊 Thoughtwire Protocol")
-    print(f"   Version:     v2 (backward-compatible with v1)")
-    print(f"   V1 Header:   14 bytes")
-    print(f"   V2 Header:   16 bytes + 64-byte Ed25519 signature")
+    print("   Version:     v2 (backward-compatible with v1)")
+    print("   V1 Header:   14 bytes")
+    print("   V2 Header:   16 bytes + 64-byte Ed25519 signature")
     print(f"   MQTT Broker:  {args.mqtt_host}:{args.mqtt_port}")
     
     print(f"\n   Frame Types:  {', '.join(FRAME_TYPES.keys())}")
     print(f"   Intents:      {', '.join(INTENTS.keys())}")
     print(f"   Known Agents: {', '.join(AGENTS.keys())}")
     
-    print(f"\n   Size Comparison:")
+    print("\n   Size Comparison:")
     for text in ["yes", "Hello world", "A" * 50, "B" * 200]:
         c = frame_size_comparison(text)
         label = f'"{text[:20]}{"..." if len(text) > 20 else ""}"'

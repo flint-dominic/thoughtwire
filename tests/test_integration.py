@@ -3,10 +3,9 @@ import json
 import os
 import subprocess
 import struct
-import tempfile
 import pytest
 
-from thoughtwire.protocol import encode, decode, FRAME_TYPES, INTENTS, VERSION_1, VERSION_2
+from thoughtwire.protocol import encode, decode, FRAME_TYPES, VERSION_1, VERSION_2
 from thoughtwire.signing import AgentKeyPair, sign_frame, verify_frame
 from thoughtwire.schema import generate
 

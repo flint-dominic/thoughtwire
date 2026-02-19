@@ -1,12 +1,9 @@
 """Tests for Thoughtwire frame signing."""
-import os
-import tempfile
 import pytest
 from thoughtwire.protocol import encode
 from thoughtwire.signing import (
     AgentKeyPair, sign_frame, verify_frame,
     generate_agent_keys, load_agent_keys, init_all_keys, list_keys,
-    KEYS_DIR,
 )
 
 

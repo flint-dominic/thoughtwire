@@ -9,7 +9,7 @@ import json
 import time
 from .protocol import (
     FRAME_TYPES, INTENTS, CHANNELS, AGENTS,
-    VERSION_1, VERSION_2, MAX_PAYLOAD, MAX_CHANNEL_LEN,
+    VERSION_1, VERSION_2, MAX_PAYLOAD,
 )
 
 

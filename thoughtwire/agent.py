@@ -10,8 +10,8 @@ import time
 
 import paho.mqtt.client as mqtt
 
-from .protocol import encode, decode, AGENTS, AGENTS_REV, validate_channel
-from .signing import AgentKeyPair, load_agent_keys
+from .protocol import encode, decode, AGENTS, validate_channel
+from .signing import load_agent_keys
 from .ratelimit import RateLimiter, get_default as get_rate_limiter
 
 log = logging.getLogger("thoughtwire.agent")

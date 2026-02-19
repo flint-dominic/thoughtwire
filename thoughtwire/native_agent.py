@@ -10,11 +10,9 @@ This is the first agent that speaks Thoughtwire natively:
 
 import logging
 import time
-import json
 
 from .agent import Agent
-from .protocol import decode, FRAME_TYPES, INTENTS, AGENTS_REV
-from .signing import load_agent_keys, sign_frame, verify_frame, init_all_keys, get_replay_guard
+from .signing import init_all_keys, get_replay_guard
 
 log = logging.getLogger("thoughtwire.native")
 

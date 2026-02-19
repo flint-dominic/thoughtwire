@@ -8,7 +8,6 @@ Architecture:
 import asyncio
 import json
 import logging
-import os
 import time
 from collections import deque
 
@@ -21,8 +20,7 @@ except ImportError:
     HAS_WS = False
 
 from .protocol import (
-    encode, decode, FRAME_V1_HEADER, AGENTS, AGENTS_REV,
-    from_egregore_json, to_egregore_json, validate_channel,
+    encode, decode, FRAME_V1_HEADER, AGENTS_REV,
 )
 from .signing import load_agent_keys, sign_frame, verify_frame
 from .ratelimit import get_default as get_rate_limiter
@@ -111,7 +109,7 @@ class ThoughtwireBridge:
                     break
             else:
                 if msg.payload[0] == 2:
-                    log.warning(f"⚠️ Signed frame could not be verified against any known key")
+                    log.warning("⚠️ Signed frame could not be verified against any known key")
         
         frame = decode(msg.payload)
         if not frame:
@@ -160,7 +158,7 @@ class ThoughtwireBridge:
 
     def publish_to_mqtt(self, channel: str, agent_id: str, text: str):
         if not self.rate_limiter.check_publish():
-            log.warning(f"🚫 Bridge publish dropped (rate limited)")
+            log.warning("🚫 Bridge publish dropped (rate limited)")
             return
         agent_int = 0
         try:

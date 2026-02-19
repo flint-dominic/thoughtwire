@@ -14,8 +14,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from thoughtwire.protocol import encode, decode, FRAME_TYPES, INTENTS, CHANNELS, VERSION_2
-from thoughtwire.signing import generate_agent_keys, sign_frame, verify_frame, init_all_keys
+from thoughtwire.protocol import encode, decode, VERSION_2
+from thoughtwire.signing import generate_agent_keys, sign_frame, verify_frame
 
 MQTT_HOST = os.environ.get("MQTT_HOST", "127.0.0.1")
 MQTT_USER = os.environ.get("MQTT_USER", "bridge")
@@ -122,7 +122,7 @@ def test_signing_performance(n=10_000):
 
 def test_payload_sizes():
     print(f"\n{'='*60}")
-    print(f"TEST 3: Payload Size Stress")
+    print("TEST 3: Payload Size Stress")
     print(f"{'='*60}")
 
     sizes = [1, 10, 100, 500, 1000, 5000, 10000, 30000]
@@ -227,7 +227,7 @@ def test_mqtt_load(n=1000, timeout=30):
         tag = struct.pack("!I", i)
         payload = signed + tag
         send_times[i] = time.perf_counter()
-        pub.publish(f"egregore/stress/load", payload, qos=0)
+        pub.publish("egregore/stress/load", payload, qos=0)
     pub_time = time.perf_counter() - t0
 
     print(f"  Published {n:,} frames in {pub_time:.3f}s → {fmt_rate(n, pub_time)}")
@@ -297,7 +297,7 @@ def test_agent_churn(n_agents=20, msgs_per=50):
                     text=f"Agent {agent_num} msg {i}",
                     agent_id=0xDEAD0000 + agent_num,
                 )
-                client.publish(f"egregore/stress/churn", frame, qos=0)
+                client.publish("egregore/stress/churn", frame, qos=0)
 
             with lock:
                 total_sent += msgs_per
@@ -305,7 +305,7 @@ def test_agent_churn(n_agents=20, msgs_per=50):
             time.sleep(0.2)
             client.loop_stop()
             client.disconnect()
-        except Exception as e:
+        except Exception:
             with lock:
                 errors += 1
 

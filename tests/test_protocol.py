@@ -1,8 +1,7 @@
 """Tests for Thoughtwire protocol encoding/decoding."""
 import pytest
 from thoughtwire.protocol import (
-    encode, decode, FRAME_TYPES, INTENTS, AGENTS,
-    validate_channel, validate_payload, ValidationError,
+    encode, decode, FRAME_TYPES, INTENTS, validate_channel, validate_payload, ValidationError,
     frame_size_comparison, VERSION_1, VERSION_2,
     MAX_PAYLOAD, from_egregore_json, to_egregore_json,
 )

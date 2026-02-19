@@ -1,7 +1,7 @@
 """Tests for schema generation."""
 import json
 import pytest
-from thoughtwire.schema import generate, FORMATS
+from thoughtwire.schema import generate
 from thoughtwire.protocol import FRAME_TYPES, INTENTS
 
 

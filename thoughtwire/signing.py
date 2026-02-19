@@ -9,7 +9,6 @@ but marked as unverified.
 import hashlib
 import hmac
 import os
-import struct
 import time
 import threading
 from collections import OrderedDict
