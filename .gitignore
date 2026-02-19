@@ -7,3 +7,8 @@ build/
 *.key
 *.hmac
 .pytest_cache/
+
+# Roam index (local only)
+.roam/index.db
+.roam/index.db-shm
+.roam/index.db-wal
