@@ -11,8 +11,8 @@ import time
 
 # ── Frame Headers ─────────────────────────────────────────────────
 
-FRAME_V1_HEADER = struct.Struct("!BBIIBBh")   # 14 bytes
-FRAME_V2_HEADER = struct.Struct("!BBIIBBhH")  # 16 bytes
+FRAME_V1_HEADER = struct.Struct("!BBIIBBH")   # 14 bytes
+FRAME_V2_HEADER = struct.Struct("!BBIIBBHH")  # 16 bytes
 
 VERSION_1 = 1
 VERSION_2 = 2

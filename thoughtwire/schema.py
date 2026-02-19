@@ -260,7 +260,7 @@ typedef struct __attribute__((packed)) {{
     uint32_t timestamp;
     uint8_t  confidence;    /* 0-255 → 0.0-1.0 */
     uint8_t  intent;
-    int16_t  payload_len;
+    uint16_t payload_len;
 }} tw_frame_v1_t;
 
 /* V2 Frame Header (16 bytes, packed, network byte order) */
@@ -271,7 +271,7 @@ typedef struct __attribute__((packed)) {{
     uint32_t timestamp;
     uint8_t  confidence;
     uint8_t  intent;
-    int16_t  payload_len;
+    uint16_t payload_len;
     uint16_t sig_len;       /* 0 = unsigned, 64 = Ed25519 */
 }} tw_frame_v2_t;
 
@@ -329,7 +329,7 @@ pub struct FrameV1Header {{
     pub timestamp: u32,
     pub confidence: u8,
     pub intent: u8,
-    pub payload_len: i16,
+    pub payload_len: u16,
 }}
 
 /// V2 frame header (16 bytes, network byte order)
@@ -341,7 +341,7 @@ pub struct FrameV2Header {{
     pub timestamp: u32,
     pub confidence: u8,
     pub intent: u8,
-    pub payload_len: i16,
+    pub payload_len: u16,
     pub sig_len: u16,
 }}
 

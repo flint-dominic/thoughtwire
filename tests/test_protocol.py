@@ -103,6 +103,17 @@ class TestValidation:
         with pytest.raises(ValidationError):
             validate_payload(b"x" * (MAX_PAYLOAD + 1))
 
+    def test_large_payload_roundtrip(self):
+        """Payloads >32767 bytes must work (unsigned short, not signed)."""
+        for size in [32768, 40000, 65535]:
+            payload = b"A" * size
+            for ver in [VERSION_1, VERSION_2]:
+                frame = encode("state", 0xDEADBEEF, 0.5, "broadcast", payload, version=ver)
+                decoded = decode(frame)
+                assert decoded is not None, f"Failed to decode {size}-byte payload (v{ver})"
+                assert len(decoded["payload"]) == size, f"Payload size mismatch: {len(decoded['payload'])} != {size} (v{ver})"
+                assert decoded["payload"] == payload, f"Payload content mismatch at {size} bytes (v{ver})"
+
 
 class TestJsonConversion:
     def test_from_egregore(self):
