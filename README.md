@@ -63,7 +63,7 @@ Bytes 2-5:   agent_id    (uint32)
 Bytes 6-9:   timestamp   (uint32)
 Byte 10:     confidence  (uint8)    — 0-255 maps to 0.0-1.0
 Byte 11:     intent      (uint8)    — inform, request, propose, approve, reject, respond, query, delegate
-Bytes 12-13: payload_len (int16)
+Bytes 12-13: payload_len (uint16)
 Bytes 14+:   payload     (variable, binary or UTF-8)
 ```
 
@@ -149,6 +149,7 @@ agent.run()
 3. **Intent is explicit.** No NLP parsing needed.
 4. **State diffs over re-statement.** Send what changed.
 5. **Backward compatible.** V2 accepts v1. Always.
+6. **Payload is opaque.** Thoughtwire frames the envelope; agents own the payload format. Use any encoding you want — Protobuf, MessagePack, zstd-compressed, custom codebooks — without protocol changes.
 
 ## Requirements
 

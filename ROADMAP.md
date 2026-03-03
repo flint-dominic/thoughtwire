@@ -1,6 +1,6 @@
 # Thoughtwire Roadmap
 
-## v0.1.0 ✅ (Current)
+## v0.1.0 ✅
 - 14-byte binary frame protocol
 - MQTT transport (Mosquitto)
 - Bidirectional Egregore WS↔MQTT bridge
@@ -9,27 +9,34 @@
 - 51 tests passing
 - Cross-host verified (Tailscale)
 
-## v0.2.0 — Public Ready
+## v0.2.1 ✅ (Current)
 *Goal: Anyone can run Thoughtwire without touching our credentials.*
 
+- [x] Move all tokens/credentials to `.env` (strip from source)
+- [x] MQTT authentication (username/password per agent)
+- [x] Topic ACLs — agents publish only to their own namespaces
+- [x] Sanitize README examples (no real IPs/tokens)
+- [x] Ed25519 keypair per agent (`thoughtwire keygen`)
+- [x] Ed25519 frame signing and verification (v2 protocol)
+- [x] Protocol v2 header: 2-byte sig_len + appended Ed25519 signature
+- [x] HMAC-SHA256 fallback when `cryptography` package unavailable
+- [x] Replay protection (timestamp window + nonce deduplication)
+- [x] Token-bucket rate limiting (per-agent inbound/outbound)
+- [x] Schema generation: Protobuf, FlatBuffers, JSON Schema, C header, Rust
+- [x] IPv6 support
+- [x] CLI: encode, decode, keygen, keylist, schema, stats
 - [ ] Extract hardcoded agent IDs to config file
-- [ ] Move all tokens/credentials to `.env` (strip from source)
 - [ ] `thoughtwire init` — Generate config, agent keys, broker config
-- [ ] MQTT authentication (username/password per agent)
-- [ ] Topic ACLs — agents publish only to their own namespaces
 - [ ] Dynamic agent registration (not hardcoded map)
-- [ ] Sanitize README examples (no real IPs/tokens)
 
-## v0.3.0 — Frame Signing
-*Goal: Cryptographic attribution. Every frame proves who sent it.*
+## v0.3.0 — Hardening
+*Goal: Close gaps in the security and agent layers.*
 
-- [ ] Ed25519 keypair per agent (generated at registration)
-- [ ] HMAC-SHA256 frame signatures (append to frame, verify on receive)
-- [ ] Protocol v2 header: add 2-byte signature_len + signature bytes
 - [ ] Key exchange via `egregore/system/keyexchange` topic
 - [ ] Reject unsigned/invalid frames (configurable: warn or drop)
 - [ ] Agent attestation (per arXiv:2602.11327 threat model)
 - [ ] Context isolation — agents can't read other agents' direct channels
+- [ ] Evict stale senders from rate limiter inbound buckets
 
 ## v0.4.0 — Federation
 *Goal: Separate Thoughtwire networks can discover and talk to each other.*
@@ -49,6 +56,7 @@
 - [ ] Attention priority queue (agents can flag urgency)
 - [ ] Temporal logic fields (valid_from, valid_until, supersedes)
 - [ ] Confidence aggregation (combine multiple agent confidences)
+- [ ] Payload compression (zstd) for large frames
 
 ## v1.0.0 — Production
 *Goal: Stable protocol, real users, documented and battle-tested.*
@@ -66,5 +74,25 @@
 - Hardware agent support (ESP32/RPi speaking Thoughtwire)
 - AI-to-AI negotiation protocol (built on rich frames)
 - Integration with ActivityPub for human-facing federation
-- Compression for large payloads (zstd frame payload)
 - QoS levels mapped to MQTT QoS (0=fire-forget, 1=ack, 2=exactly-once)
+
+## Design Decisions
+
+### Payload encoding is opaque
+
+The payload field is intentionally unstructured at the protocol level — it carries raw
+bytes (UTF-8 text or binary). Thoughtwire handles framing, routing, signing, and
+semantic metadata (intent, confidence, frame type). Payload interpretation is the
+agents' concern.
+
+Agents are free to use any payload encoding they agree on (Protobuf, MessagePack,
+CBOR, custom codebooks, etc.) without protocol changes. We will not add a
+`payload_encoding` header field because:
+
+1. It would require a wire format change (protocol v3) for an application-layer concern.
+2. It couples the protocol to specific codec implementations.
+3. Agents can already negotiate encoding out-of-band or via a leading magic byte.
+
+When structured payloads are needed, v0.5.0 will provide Protobuf schema definitions
+as a recommended convention, not a protocol requirement. For bulk compression, zstd
+at the payload level is planned for v0.5.0.

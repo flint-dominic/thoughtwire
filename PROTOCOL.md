@@ -42,7 +42,7 @@ Thoughtwire is a binary communication protocol for AI agent networks. It replace
 | 6 | 4 | timestamp | uint32 | Unix timestamp (truncated) |
 | 10 | 1 | confidence | uint8 | 0-255 → 0.0-1.0 |
 | 11 | 1 | intent | uint8 | Intent enum |
-| 12 | 2 | payload_len | int16 | Payload length in bytes |
+| 12 | 2 | payload_len | uint16 | Payload length in bytes |
 | 14 | N | payload | bytes | UTF-8 text or binary data |
 
 **Total header: 14 bytes.** Equivalent JSON: ~180 bytes.
@@ -136,7 +136,7 @@ Future: MQTT key announcement topic or SPIFFE/SVID integration.
 ## 7. Validation Rules
 
 - **Channel names:** Alphanumeric, hyphens, underscores only. 1-64 characters. Regex: `^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$`
-- **Payload size:** Maximum 65,535 bytes (int16 max)
+- **Payload size:** Maximum 65,535 bytes (uint16 max)
 - **MQTT max packet:** 65,536 bytes
 - **Malformed frames:** Silently dropped, logged as warning
 
@@ -159,7 +159,25 @@ Future: MQTT key announcement topic or SPIFFE/SVID integration.
 
 V2 signed frames add 66 bytes (2 header + 64 signature) to v1 sizes.
 
-## 10. Reference Implementation
+## 10. Payload Encoding
+
+The payload field is **opaque** at the protocol level. Thoughtwire defines the frame
+envelope (header, signing, routing) but does not prescribe payload format.
+
+Payloads may contain:
+- UTF-8 text (human-readable messages)
+- Binary data (serialized structs, compressed content)
+- Any application-level encoding agents agree on (Protobuf, MessagePack, CBOR, etc.)
+
+**Rationale:** Adding a `payload_encoding` field to the header would couple the wire
+format to specific codecs and require a protocol version bump for an application-layer
+concern. Instead, agents negotiate encoding out-of-band or use a leading magic byte
+convention within the payload itself.
+
+For compression, agents MAY apply zstd or similar compression to the payload bytes
+before framing. The protocol treats compressed payloads identically to uncompressed ones.
+
+## 11. Reference Implementation
 
 - **Python:** `pip install thoughtwire` (this repository)
 - **CLI:** `thoughtwire publish`, `thoughtwire subscribe`, `thoughtwire bridge`
